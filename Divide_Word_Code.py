@@ -1,6 +1,11 @@
 #正则表达式库
 import re
+from datasets import load_dataset
 
+dataset = load_dataset("wikitext", name="wikitext-2-raw-v1", split="train")
+with open("分词语料1.txt", "w", encoding="utf-8") as f:
+    for i in range(len(dataset)):
+        f.write(dataset[i]["text"] + "\n")
 #进行分词操作
 
 #打开分词语料文件
