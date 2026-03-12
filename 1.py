@@ -27,5 +27,6 @@ class TransformerEmbedding(nn.Module):
         super(TransformerEmbedding, self).__init__()
         self.tok_emb = TokenEmbedding(vocab_size, d_model)
         self.pos_emb = PositionalEncoding(d_model, max_len, device)
+        self.drop_out = nn.Dropout(p = drop_prob)#drop_prob是丢弃的概率，默认为0.1
     def forward(self, x):
-        return self.tok_emb(x) + self.pos_emb(x)
+        return self.drop_out(self.tok_emb(x) + self.pos_emb(x))
