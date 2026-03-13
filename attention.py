@@ -2,11 +2,6 @@ import torch.nn as nn
 import torch
 import torch.nn.functional as F
 import math
-print("torch version:", torch.__version__)
-
-x = torch.rand(128, 32, 512)#batch_size=128, seq_len=32, d_model=512
-d_model = 512
-num_heads = 8
 
 
 class MutiHeadAttention(nn.Module):
@@ -36,6 +31,3 @@ class MutiHeadAttention(nn.Module):
         return output
     
 
-attention = MutiHeadAttention(d_model=512, num_heads=8)
-output = attention(x, x, x)
-print(output)

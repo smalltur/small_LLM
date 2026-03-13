@@ -3,6 +3,11 @@ import torch
 import torch.nn.functional as F
 import math
 
+import layernorm as ly
+from attention import MutiHeadAttention
+import tokeners as tk
+print("torch version:", torch.__version__)
+
 class PositionwiseFeedForward(nn.Module):
     def __init__(self, d_model, d_ff, dropout=0.1):
         super(PositionwiseFeedForward, self).__init__()
@@ -21,21 +26,34 @@ class EncoderLayer(nn.Module):
     def __init__(self, d_model, num_heads, d_ff, dropout=0.1):
         super(EncoderLayer, self).__init__()
         self.self_attention = MutiHeadAttention(d_model, num_heads)
-        self.norm_1 = LayerNorm(d_model)
+        self.norm_1 = ly.LayerNorm(d_model)
         self.dropout1 = nn.Dropout(dropout)
         self.feed_forward = PositionwiseFeedForward(d_model, d_ff, dropout)
-        self.norm_2 = LayerNorm(d_model)
+        self.norm_2 = ly.LayerNorm(d_model)
         self.dropout2 = nn.Dropout(dropout)
 
     def forward(self, x, mask=None):
         # Self-attention
         attn_output = self.self_attention(x, x, x, mask)
-        attn_output = self.dropout(attn_output)
-        x = self.n orm_1(x + attn_output)  # Residual connection and layer normalization
+        attn_output = self.dropout1(attn_output)
+        x = self.norm_1(x + attn_output)  # Residual connection and layer normalization
 
         # Feed-forward network
         ff_output = self.feed_forward(x)
-        ff_output = self.dropout(ff_output)
+        ff_output = self.dropout2(ff_output)
         x = self.norm_2(x + ff_output)  # Residual connection and layer normalization
 
+        return x
+
+class Encoder(nn.Module):
+    def __init__(self,enc_voc_size, max_len, num_layers, d_model, num_heads, d_ff, dropout=0.1, device = torch.device('cpu')):
+        super(Encoder, self).__init__()
+        self.embedding = tk.TokenEmbedding(enc_voc_size, d_model, dropout, device)
+        self.layers = nn.ModuleList([EncoderLayer(d_model, num_heads, d_ff, dropout, device) for _ in range(num_layers)])
+        #self.norm = ly.LayerNorm(d_model)
+
+    def forward(self, x, mask=None):
+        x = self.embedding(x)
+        for layer in self.layers:
+            x = layer(x, mask)
         return x

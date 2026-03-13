@@ -2,7 +2,7 @@ import torch.nn as nn
 import torch
 import torch.nn.functional as F
 import math
-print("torch version:", torch.__version__)
+
 
 #将输入的词语转换为对应的词向量
 class TokenEmbedding(nn.Module):
