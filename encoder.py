@@ -6,7 +6,6 @@ import math
 import layernorm as ly
 from attention import MutiHeadAttention
 import tokeners as tk
-print("torch version:", torch.__version__)
 
 class PositionwiseFeedForward(nn.Module):
     def __init__(self, d_model, d_ff, dropout=0.1):
@@ -42,14 +41,13 @@ class EncoderLayer(nn.Module):
         ff_output = self.feed_forward(x)
         ff_output = self.dropout2(ff_output)
         x = self.norm_2(x + ff_output)  # Residual connection and layer normalization
-
         return x
 
 class Encoder(nn.Module):
     def __init__(self,enc_voc_size, max_len, num_layers, d_model, num_heads, d_ff, dropout=0.1, device = torch.device('cpu')):
         super(Encoder, self).__init__()
-        self.embedding = tk.TokenEmbedding(enc_voc_size, d_model, dropout, device)
-        self.layers = nn.ModuleList([EncoderLayer(d_model, num_heads, d_ff, dropout, device) for _ in range(num_layers)])
+        self.embedding = tk.TokenEmbedding(enc_voc_size, d_model)
+        self.layers = nn.ModuleList([EncoderLayer(d_model, num_heads, d_ff, dropout) for _ in range(num_layers)])
         #self.norm = ly.LayerNorm(d_model)
 
     def forward(self, x, mask=None):
