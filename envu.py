@@ -23,7 +23,7 @@ def tokenize_en(text):
 
 # 修正模型加载函数
 def load_model(checkpoint_path, device):
-    checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
+    checkpoint = torch.load(checkpoint_path, map_location=device, weights_only = False)
     src_vocab = checkpoint['src_vocab']
     tgt_vocab = checkpoint['tgt_vocab']
     

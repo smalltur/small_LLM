@@ -46,7 +46,7 @@ class EncoderLayer(nn.Module):
 class Encoder(nn.Module):
     def __init__(self,enc_voc_size, max_len, num_layers, d_model, num_heads, d_ff, dropout=0.1, device = torch.device('cpu')):
         super(Encoder, self).__init__()
-        self.embedding = tk.TokenEmbedding(enc_voc_size, d_model)
+        self.embedding = tk.TransformerEmbedding(enc_voc_size, d_model, max_len, dropout, device)
         self.layers = nn.ModuleList([EncoderLayer(d_model, num_heads, d_ff, dropout) for _ in range(num_layers)])
         #self.norm = ly.LayerNorm(d_model)
 
