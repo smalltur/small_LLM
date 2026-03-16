@@ -4,17 +4,17 @@ import torch.nn.functional as F
 import math
 
 import layernorm as ly
-from attention import MutiHeadAttention
+from attention import MultiHeadAttention
 import tokeners as tk
 import encoder as enc
 
 class DecoderLayer(nn.Module):
     def __init__(self, d_model, num_heads, d_ff, dropout=0.1):
         super(DecoderLayer, self).__init__()
-        self.self_attention = MutiHeadAttention(d_model, num_heads)
+        self.self_attention = MultiHeadAttention(d_model, num_heads)
         self.norm_1 = ly.LayerNorm(d_model)
         self.dropout1 = nn.Dropout(dropout)
-        self.enc_dec_attention = MutiHeadAttention(d_model, num_heads)
+        self.enc_dec_attention = MultiHeadAttention(d_model, num_heads)
         self.norm_2 = ly.LayerNorm(d_model)
         self.dropout2 = nn.Dropout(dropout)
         self.feed_forward = enc.PositionwiseFeedForward(d_model, d_ff, dropout)

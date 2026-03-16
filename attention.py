@@ -4,9 +4,9 @@ import torch.nn.functional as F
 import math
 
 
-class MutiHeadAttention(nn.Module):
+class MultiHeadAttention(nn.Module):
     def __init__(self, d_model, num_heads):
-        super(MutiHeadAttention, self).__init__()
+        super(MultiHeadAttention, self).__init__()
         self.d_model = d_model
         self.num_heads = num_heads
         self.w_q = nn.Linear(d_model, d_model)
@@ -15,19 +15,30 @@ class MutiHeadAttention(nn.Module):
         self.w_combine = nn.Linear(d_model, d_model)
         self.softmax = nn.Softmax(dim=-1)
     def forward(self, q, k, v, mask=None):
-        batch, seq_len, dimension = q.size()
-        n_d = self.d_model // self.num_heads
-        q, k, v = self.w_q(q), self.w_k(k), self.w_v(v)
-        q = q.view(batch, seq_len, self.num_heads, n_d).transpose(1, 2)
-        k = k.view(batch, seq_len, self.num_heads, n_d).transpose(1, 2)
-        v = v.view(batch, seq_len, self.num_heads, n_d).transpose(1, 2)
-        score = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(n_d)
+        batch_size = q.size(0)
+        # 线性变换并分头
+        q = self.w_q(q).view(batch_size, q.size(1), self.num_heads, self.d_model // self.num_heads).transpose(1, 2)
+        k = self.w_k(k).view(batch_size, k.size(1), self.num_heads, self.d_model // self.num_heads).transpose(1, 2)
+        v = self.w_v(v).view(batch_size, v.size(1), self.num_heads, self.d_model // self.num_heads).transpose(1, 2)
+
+        seq_len_q = q.size(2)  # 注意：这里固定seq_len_q，避免-1导致的维度错误
+        seq_len_k = k.size(2)  # 注意：这里固定seq_len_k
+        
+        
+        # Scaled Dot-Product Attention
+        scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(self.d_model // self.num_heads)
+        
         if mask is not None:
-            score = score.masked_fill(mask == 0, -1e9)
-            score = self.softmax(score)
-        output = torch.matmul(score, v)
-        output = output.transpose(1, 2).contiguous().view(batch, seq_len, self.d_model)
-        output = self.w_combine(output)
+            scores = scores.masked_fill(mask == True, float('-inf'))
+        
+        attn_weights = self.softmax(scores)
+        attn_output = torch.matmul(attn_weights, v)
+       
+          # 3. 合并多头（核心修复！固定seq_len_q，避免-1导致的维度错误）
+        attn_output = attn_output.transpose(1, 2).contiguous()  # [8,50,8,16]
+        attn_output = attn_output.view(batch_size, seq_len_q, self.d_model)  # [8,50,128]（和输入x形状一致）
+        
+        output = self.w_combine(attn_output)
         return output
     
 

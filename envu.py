@@ -49,48 +49,71 @@ def load_model(checkpoint_path, device):
     return model, src_vocab, tgt_vocab
 
 # 修正翻译函数
-def translate(model, src_text, src_vocab, tgt_vocab, device, max_len=50):
-    # 1. 预处理输入文本（确保长度不超过max_len）
-    src_tokens = tokenize_en(src_text)
-    src_ids = [src_vocab.token2idx['<sos>']] + src_vocab.convert_tokens_to_ids(src_tokens) + [src_vocab.token2idx['<eos>']]
+def translate(model, src_text, src_vocab, tgt_vocab, device, max_len=50, batch_size=8):
+    """
+    兼容单文本输入的批量翻译函数（修复类型错误）
+    :param src_text: 单个源文本字符串（原调用方式）
+    """
+    # 关键修复：将单文本转为列表，适配批量逻辑
+    src_texts = [src_text]  # 把单个字符串转为长度为1的列表
+    
+    # 0. 补全到batch_size（不足则用空文本填充）
+    pad_text = ""  # 空文本
+    if len(src_texts) < batch_size:
+        # 补全空文本到batch_size
+        src_texts += [pad_text] * (batch_size - len(src_texts))
+    
+    # 1. 批量预处理输入文本
+    src_ids_batch = []
     pad_idx = src_vocab.token2idx['<pad>']
+    sos_idx = src_vocab.token2idx['<sos>']
+    eos_idx = src_vocab.token2idx['<eos>']
     
-    # 关键修正：截断/补全到max_len，确保维度正确
-    if len(src_ids) > max_len:
-        src_ids = src_ids[:max_len]
-    else:
-        src_ids += [pad_idx] * (max_len - len(src_ids))
+    for text in src_texts:
+        src_tokens = tokenize_en(text)
+        src_ids = [sos_idx] + src_vocab.convert_tokens_to_ids(src_tokens) + [eos_idx]
+        # 截断/补全到max_len
+        if len(src_ids) > max_len:
+            src_ids = src_ids[:max_len]
+        else:
+            src_ids += [pad_idx] * (max_len - len(src_ids))
+        src_ids_batch.append(src_ids)
     
-    # 添加batch维度：[1, max_len]
-    src_input = torch.tensor(src_ids, dtype=torch.long).unsqueeze(0).to(device)
+    # 转换为batch张量：[8, max_len]
+    src_input = torch.tensor(src_ids_batch, dtype=torch.long).to(device)
     
-    # 2. 初始化目标序列（仅<sos>，长度1）
-    tgt_input = torch.tensor([[tgt_vocab.token2idx['<sos>']]], dtype=torch.long).to(device)
+    # 2. 初始化目标序列：[8, 1]
+    tgt_input = torch.tensor([[tgt_vocab.token2idx['<sos>']]] * batch_size, dtype=torch.long).to(device)
     
-    # 3. 自回归生成（禁用梯度）
+    # 3. 批量自回归生成
+    model.eval()  # 推理模式
     with torch.no_grad():
         for _ in range(max_len - 1):
-            # 每次生成都调用model.forward，动态生成掩码
-            output = model(src_input, tgt_input)  # [1, len(tgt_input), dec_voc_size]
-            
-            # 取最后一个token的预测结果
+            output = model(src_input, tgt_input)
+            # 取最后一个token的预测
             next_token_logits = output[:, -1, :]
             next_token_idx = torch.argmax(next_token_logits, dim=-1).unsqueeze(1)
-            
-            # 拼接新token
+            # 拼接
             tgt_input = torch.cat([tgt_input, next_token_idx], dim=1)
-            
-            # 终止条件
-            if next_token_idx.item() == tgt_vocab.token2idx['<eos>']:
+            # 检查是否所有样本都生成<eos>（提前终止）
+            eos_mask = (next_token_idx == tgt_vocab.token2idx['<eos>']).squeeze(1)
+            if torch.all(eos_mask):
                 break
     
-    # 4. 解码结果
-    tgt_ids = tgt_input.squeeze(0).cpu().numpy()
+    # 4. 解码结果（只取第一个样本的结果，因为输入是单文本）
+    tgt_eos_idx = tgt_vocab.token2idx['<eos>']
+    tgt_sos_idx = tgt_vocab.token2idx['<sos>']
+    tgt_pad_idx = tgt_vocab.token2idx['<pad>']
+    
+    # 只解码第一个样本（对应输入的src_text）
+    tgt_ids = tgt_input[0].cpu().numpy()
     tgt_tokens = []
     for idx in tgt_ids:
         token = tgt_vocab.idx2token.get(idx, '<unk>')
-        if token in ['<pad>', '<sos>', '<eos>']:
+        if token in ['<sos>', '<pad>']:
             continue
+        if token == '<eos>':
+            break
         tgt_tokens.append(token)
     
     return ' '.join(tgt_tokens)

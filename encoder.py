@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import math
 
 import layernorm as ly
-from attention import MutiHeadAttention
+from attention import MultiHeadAttention
 import tokeners as tk
 
 class PositionwiseFeedForward(nn.Module):
@@ -24,7 +24,7 @@ class PositionwiseFeedForward(nn.Module):
 class EncoderLayer(nn.Module):
     def __init__(self, d_model, num_heads, d_ff, dropout=0.1):
         super(EncoderLayer, self).__init__()
-        self.self_attention = MutiHeadAttention(d_model, num_heads)
+        self.self_attention = MultiHeadAttention(d_model, num_heads)
         self.norm_1 = ly.LayerNorm(d_model)
         self.dropout1 = nn.Dropout(dropout)
         self.feed_forward = PositionwiseFeedForward(d_model, d_ff, dropout)
