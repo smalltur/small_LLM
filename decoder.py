@@ -44,7 +44,7 @@ class DecoderLayer(nn.Module):
 class Decoder(nn.Module):
     def __init__(self,dec_voc_size, max_len, num_layers, d_model, num_heads, d_ff, dropout=0.1, device = torch.device('cpu')):
         super(Decoder, self).__init__()
-        self.embedding = tk.TokenEmbedding(dec_voc_size, d_model)
+        self.embedding = tk.TransformerEmbedding(dec_voc_size, d_model, max_len, dropout, device)
         self.layers = nn.ModuleList([DecoderLayer(d_model, num_heads, d_ff, dropout) for _ in range(num_layers)])
         #self.norm = ly.LayerNorm(d_model)
         self.fc = nn.Linear(d_model, dec_voc_size)
