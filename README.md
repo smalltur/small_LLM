@@ -1,6 +1,6 @@
-## Seq2seq translate model by classical Transformer
+# Seq2seq translate model by classical Transformer
 This is a Seq2seq model by classical Transformer
-# File Structure
+## File Structure
 cn.txt, en.txt is the data for training
 cn. test.txt, en.test.txt is the data for verify
 c.txt, e.txt is the data to be used when I debug
