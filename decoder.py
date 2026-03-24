@@ -46,7 +46,7 @@ class Decoder(nn.Module):
         super(Decoder, self).__init__()
         self.embedding = tk.TransformerEmbedding(dec_voc_size, d_model, max_len, dropout, device)
         self.layers = nn.ModuleList([DecoderLayer(d_model, num_heads, d_ff, dropout) for _ in range(num_layers)])
-        #self.norm = ly.LayerNorm(d_model)
+        self.norm = ly.LayerNorm(d_model)
         self.fc = nn.Linear(d_model, dec_voc_size)
 
     def forward(self, dec_input, enc_output, src_mask=None, tgt_mask=None):

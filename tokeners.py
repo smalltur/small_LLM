@@ -54,10 +54,11 @@ class TransformerEmbedding(nn.Module):
         self.tok_emb = TokenEmbedding(vocab_size, d_model)  # 词嵌入
         self.pos_emb = PositionalEncoding(d_model, max_len, device)  # 位置编码
         self.drop_out = nn.Dropout(p=drop_prob)  # Dropout防止过拟合
+        self.d_model = d_model  # 词向量维度（用于缩放）
 
     def forward(self, x):
         # x: token索引，形状 [batch_size, seq_len]
-        tok_emb = self.tok_emb(x)  # 词嵌入：[batch_size, seq_len, d_model]
+        tok_emb = self.tok_emb(x) * math.sqrt(self.d_model)  # 词嵌入：[batch_size, seq_len, d_model]
         pos_emb = self.pos_emb(tok_emb)  # 位置编码：[batch_size, seq_len, d_model]
         # 词嵌入+位置编码后加Dropout
         return self.drop_out(tok_emb + pos_emb)

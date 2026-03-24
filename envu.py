@@ -274,8 +274,8 @@ def translate(model, src_text, src_vocab, tgt_vocab, device, max_len=50, n_gram_
 # ====================== 3. 主预测流程（重新生成词表） ======================
 if __name__ == '__main__':
     # 配置路径（必须和训练时的路径完全一致！）
-    TRAIN_ZH_FILE = './c.txt'        # 训练集中文文件（和训练时一致）
-    TRAIN_EN_FILE = './e.txt'        # 训练集英文文件（和训练时一致）
+    TRAIN_ZH_FILE = './cn.txt'        # 训练集中文文件（和训练时一致）
+    TRAIN_EN_FILE = './en.txt'        # 训练集英文文件（和训练时一致）
     MODEL_PATH = './best_transformer_model.pth'  # 训练好的模型路径
 
     # 设备配置
@@ -306,7 +306,7 @@ if __name__ == '__main__':
     model.load_state_dict(checkpoint['model_state_dict'])
     
     # 测试翻译（可调整n_gram_block参数，建议2或3）
-    test_sentence = "hello world good byes"
+    test_sentence = "it turned out that the rocket 's range lengthened after some of the propellant was removed"
     result = translate(model, test_sentence, src_vocab, tgt_vocab, device, n_gram_block=10)
     
     print("===== 翻译测试结果 =====")

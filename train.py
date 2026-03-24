@@ -190,11 +190,11 @@ def validate(model, val_loader, criterion, device, tgt_pad_idx):
 if __name__ == '__main__':
     # ---------------------- 配置参数 ----------------------
     # 数据文件路径（训练集+独立验证集）
-    TRAIN_ZH_FILE = './c.txt'        # 训练集中文
-    TRAIN_EN_FILE = './e.txt'        # 训练集英文
-    VAL_ZH_FILE = './c.txt'     # 验证集中文
-    VAL_EN_FILE = './e.txt'     # 验证集英文
-    
+    TRAIN_ZH_FILE = './cn.txt'        # 训练集中文
+    TRAIN_EN_FILE = './en.txt'        # 训练集英文
+    VAL_ZH_FILE = './cn.test.txt'     # 验证集中文
+    VAL_EN_FILE = './en.test.txt'     # 验证集英文
+
     # 设备配置
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f'使用设备: {device}')
@@ -211,8 +211,8 @@ if __name__ == '__main__':
     DROPOUT = 0.1
     
     # 训练参数（关键修正：降低学习率，避免梯度爆炸）
-    NUM_EPOCHS = 50
-    LR = 0.0001  # 修正：从0.001降到0.0001，Transformer推荐小学习率
+    NUM_EPOCHS = 150
+    LR = 0.001  
     SAVE_PATH = './best_transformer_model.pth'
     PATIENCE = 10  # 修正：从20降到10，避免过拟合
 
